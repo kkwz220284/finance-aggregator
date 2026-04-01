@@ -1,0 +1,27 @@
+{
+    "name": "finance-aggregator",
+    "dockerComposeFile": [
+        "docker-compose.yml"
+    ],
+    "service": "api",
+    "workspaceFolder": "/workspace",
+    "forwardPorts": [
+        8080,
+        5432
+    ],
+    "postCreateCommand": "uv sync",
+    "customizations": {
+        "vscode": {
+            "extensions": [
+                "charliermarsh.ruff",
+                "ms-python.debugpy",
+                "ms-python.python",
+                "ms-python.vscode-pylance",
+                "ms-python.vscode-python-envs"
+            ],
+            "settings": {
+                "python.defaultInterpreterPath": "/workspace/.venv/bin/python"
+            }
+        }
+    }
+}
