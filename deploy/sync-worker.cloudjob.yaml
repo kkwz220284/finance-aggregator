@@ -1,0 +1,64 @@
+# Cloud Run Job spec for the sync worker — apply with:
+#   gcloud run jobs replace deploy/sync-worker.cloudjob.yaml --region=europe-west2
+#
+# Run manually:   gcloud run jobs execute finance-aggregator-sync --region=europe-west2
+# Run for one account:
+#   gcloud run jobs execute finance-aggregator-sync \
+#     --update-env-vars SYNC_ACCOUNT_ID=<uuid> --region=europe-west2
+#
+# Schedule daily at 06:00 UTC via Cloud Scheduler:
+#   gcloud scheduler jobs create http finance-aggregator-sync-daily \
+#     --schedule="0 6 * * *" \
+#     --uri="https://europe-west2-run.googleapis.com/apis/run.googleapis.com/v1/namespaces/PROJECT_ID/jobs/finance-aggregator-sync:run" \
+#     --oauth-service-account-email=finance-aggregator-sa@PROJECT_ID.iam.gserviceaccount.com \
+#     --location=europe-west2
+apiVersion: run.googleapis.com/v1
+kind: Job
+metadata:
+  name: finance-aggregator-sync
+spec:
+  template:
+    spec:
+      template:
+        metadata:
+          annotations:
+            run.googleapis.com/cloudsql-instances: PROJECT_ID:europe-west2:finance-db
+        spec:
+          serviceAccountName: finance-aggregator-sa@PROJECT_ID.iam.gserviceaccount.com
+          maxRetries: 2
+          containers:
+            - image: europe-west2-docker.pkg.dev/PROJECT_ID/finance-aggregator/sync-worker:IMAGE_TAG
+              resources:
+                limits:
+                  memory: 256Mi
+                  cpu: "1"
+              env:
+                - name: ENVIRONMENT
+                  value: cloud
+                - name: TRUELAYER_SANDBOX
+                  value: "false"
+                - name: DATABASE_URL
+                  value: postgresql+asyncpg://finance@/finance?host=/cloudsql/PROJECT_ID:europe-west2:finance-db
+                - name: TRUELAYER_CLIENT_ID
+                  value: YOUR_TRUELAYER_CLIENT_ID
+                - name: TRUELAYER_REDIRECT_URI
+                  value: https://YOUR_DOMAIN/api/v1/auth/truelayer/callback
+                - name: TRUELAYER_WEBHOOK_SECRET
+                  value: ""
+                - name: SYNC_ACCOUNT_ID
+                  value: ""
+                - name: FERNET_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: fernet-key
+                      key: latest
+                - name: TRUELAYER_CLIENT_SECRET
+                  valueFrom:
+                    secretKeyRef:
+                      name: truelayer-client-secret
+                      key: latest
+                - name: API_KEY
+                  valueFrom:
+                    secretKeyRef:
+                      name: api-key
+                      key: latest

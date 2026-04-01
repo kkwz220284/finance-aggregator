@@ -1,0 +1,78 @@
+steps:
+  # 1. Run tests
+  - name: "python:3.13-slim"
+    entrypoint: bash
+    args:
+      - -c
+      - |
+        pip install uv -q &&
+        uv sync --frozen &&
+        uv run pytest tests/ -x -q
+
+  # 2. Build API image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/finance-aggregator/api:$COMMIT_SHA
+      - -f
+      - api/Dockerfile
+      - .
+
+  # 3. Build sync-worker image
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - build
+      - -t
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/finance-aggregator/sync-worker:$COMMIT_SHA
+      - -f
+      - sync_worker/Dockerfile
+      - .
+
+  # 4. Push both images
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/finance-aggregator/api:$COMMIT_SHA
+
+  - name: gcr.io/cloud-builders/docker
+    args:
+      - push
+      - europe-west2-docker.pkg.dev/$PROJECT_ID/finance-aggregator/sync-worker:$COMMIT_SHA
+
+  # 5. Deploy API to Cloud Run
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    args:
+      - gcloud
+      - run
+      - deploy
+      - finance-aggregator-api
+      - --image=europe-west2-docker.pkg.dev/$PROJECT_ID/finance-aggregator/api:$COMMIT_SHA
+      - --region=europe-west2
+      - --platform=managed
+      - --set-cloudsql-instances=$PROJECT_ID:europe-west2:finance-db
+      - --set-secrets=FERNET_KEY=fernet-key:latest,TRUELAYER_CLIENT_SECRET=truelayer-client-secret:latest,API_KEY=api-key:latest,TRUELAYER_WEBHOOK_SECRET=truelayer-webhook-secret:latest
+      - --set-env-vars=TRUELAYER_SANDBOX=false,ENVIRONMENT=cloud
+      - --service-account=finance-aggregator-sa@$PROJECT_ID.iam.gserviceaccount.com
+      - --min-instances=0
+      - --max-instances=5
+      - --memory=512Mi
+      - --no-allow-unauthenticated
+
+  # 6. Update sync-worker Cloud Run Job
+  - name: gcr.io/google.com/cloudsdktool/cloud-sdk
+    args:
+      - gcloud
+      - run
+      - jobs
+      - update
+      - finance-aggregator-sync
+      - --image=europe-west2-docker.pkg.dev/$PROJECT_ID/finance-aggregator/sync-worker:$COMMIT_SHA
+      - --region=europe-west2
+      - --set-cloudsql-instances=$PROJECT_ID:europe-west2:finance-db
+      - --set-secrets=FERNET_KEY=fernet-key:latest,TRUELAYER_CLIENT_SECRET=truelayer-client-secret:latest
+      - --set-env-vars=TRUELAYER_SANDBOX=false,ENVIRONMENT=cloud
+      - --service-account=finance-aggregator-sa@$PROJECT_ID.iam.gserviceaccount.com
+
+options:
+  logging: CLOUD_LOGGING_ONLY
