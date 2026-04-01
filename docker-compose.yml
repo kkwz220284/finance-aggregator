@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgres:17-alpine
+    environment:
+      POSTGRES_DB: finance
+      POSTGRES_USER: finance
+      POSTGRES_PASSWORD: finance
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U finance"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  api:
+    build:
+      context: .
+      dockerfile: api/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://finance:finance@db:5432/finance
+      TRUELAYER_CLIENT_ID: ${TRUELAYER_CLIENT_ID}
+      TRUELAYER_CLIENT_SECRET: ${TRUELAYER_CLIENT_SECRET}
+      TRUELAYER_REDIRECT_URI: ${TRUELAYER_REDIRECT_URI:-http://localhost:8080/api/v1/auth/truelayer/callback}
+      TRUELAYER_WEBHOOK_SECRET: ${TRUELAYER_WEBHOOK_SECRET}
+      TRUELAYER_SANDBOX: ${TRUELAYER_SANDBOX:-true}
+      FERNET_KEY: ${FERNET_KEY}
+      API_KEY: ${API_KEY}
+      ENVIRONMENT: local
+    ports:
+      - "8080:8080"
+    depends_on:
+      db:
+        condition: service_healthy
+
+  sync_worker:
+    build:
+      context: .
+      dockerfile: sync_worker/Dockerfile
+    environment:
+      DATABASE_URL: postgresql+asyncpg://finance:finance@db:5432/finance
+      TRUELAYER_CLIENT_ID: ${TRUELAYER_CLIENT_ID}
+      TRUELAYER_CLIENT_SECRET: ${TRUELAYER_CLIENT_SECRET}
+      TRUELAYER_REDIRECT_URI: ${TRUELAYER_REDIRECT_URI:-http://localhost:8080/api/v1/auth/truelayer/callback}
+      TRUELAYER_WEBHOOK_SECRET: ${TRUELAYER_WEBHOOK_SECRET}
+      TRUELAYER_SANDBOX: ${TRUELAYER_SANDBOX:-true}
+      FERNET_KEY: ${FERNET_KEY}
+      API_KEY: ${API_KEY}
+      ENVIRONMENT: local
+      # Leave blank to sync all accounts; set to a UUID to sync one
+      SYNC_ACCOUNT_ID: ${SYNC_ACCOUNT_ID:-}
+    depends_on:
+      db:
+        condition: service_healthy
+    profiles:
+      # Only run the sync worker when explicitly requested:
+      #   docker compose --profile sync up sync_worker
+      - sync
+
+volumes:
+  pgdata:
