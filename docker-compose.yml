@@ -19,6 +19,7 @@ services:
     build:
       context: .
       dockerfile: api/Dockerfile
+    env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://finance:finance@db:5432/finance
       TRUELAYER_CLIENT_ID: ${TRUELAYER_CLIENT_ID}
@@ -39,6 +40,7 @@ services:
     build:
       context: .
       dockerfile: sync_worker/Dockerfile
+    env_file: .env
     environment:
       DATABASE_URL: postgresql+asyncpg://finance:finance@db:5432/finance
       TRUELAYER_CLIENT_ID: ${TRUELAYER_CLIENT_ID}

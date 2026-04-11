@@ -9,6 +9,7 @@
         8080,
         5432
     ],
+    "initializeCommand": "docker rm -f finance_aggregator_devcontainer-db-1 2>/dev/null || true",
     "postCreateCommand": "uv sync",
     "customizations": {
         "vscode": {
