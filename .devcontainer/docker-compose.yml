@@ -35,5 +35,10 @@ services:
         condition: service_healthy
     command: sleep infinity
 
+networks:
+  default:
+    name: finance_aggregator_devnet
+    driver: bridge
+
 volumes:
   pgdata:
