@@ -53,55 +53,7 @@ TrueLayer requires a separate `cards` scope for the `/data/v1/cards` endpoint. W
 
 ### How to verify
 
-From the devcontainer, query the database directly using Python (no `psql` needed):
-
-```bash
-# Check connected accounts
-uv run python -c "
-import asyncio
-from sqlalchemy import text
-from app.db.session import engine
-
-async def main():
-    async with engine.connect() as conn:
-        r = await conn.execute(text('SELECT id, provider_id, display_name, account_type, currency, last_synced_at FROM accounts'))
-        for row in r: print(row)
-
-asyncio.run(main())
-"
-
-# Check transaction counts per account
-uv run python -c "
-import asyncio
-from sqlalchemy import text
-from app.db.session import engine
-
-async def main():
-    async with engine.connect() as conn:
-        r = await conn.execute(text('SELECT a.display_name, count(t.id) FROM accounts a LEFT JOIN transactions t ON t.account_id = a.id GROUP BY a.display_name'))
-        for row in r: print(row)
-
-asyncio.run(main())
-"
-
-# Check transaction stats
-uv run python -c "
-import asyncio
-from sqlalchemy import text
-from app.db.session import engine
-
-async def main():
-    async with engine.connect() as conn:
-        r = await conn.execute(text('SELECT count(*) as total, min(timestamp) as earliest, max(timestamp) as latest FROM transactions'))
-        for row in r: print(row)
-        r = await conn.execute(text('SELECT transaction_type, count(*), sum(amount) FROM transactions GROUP BY transaction_type'))
-        for row in r: print(row)
-
-asyncio.run(main())
-"
-```
-
-Or via the API:
+Via the API (start the server with `uv run uvicorn api.main:app --host 0.0.0.0 --port 8080`):
 
 ```bash
 API_KEY="your-api-key"
