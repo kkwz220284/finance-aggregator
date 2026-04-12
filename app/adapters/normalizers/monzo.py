@@ -38,6 +38,7 @@ _MONZO_CATEGORY_MAP = {
 @register
 class MonzoAdapter(BankAdapter):
     provider_id = "monzo"
+    provider_aliases = ("ob-monzo",)
 
     def normalize_transaction(self, raw: dict, account_id: str) -> TransactionCreate:
         meta = raw.get("meta", {})

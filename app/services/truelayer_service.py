@@ -23,6 +23,8 @@ _transport = httpx.AsyncHTTPTransport(retries=2)
 
 
 def build_authorization_url(state: str) -> str:
+    from urllib.parse import urlencode
+
     base = settings.truelayer_auth_url
     params = {
         "response_type": "code",
@@ -33,8 +35,7 @@ def build_authorization_url(state: str) -> str:
         # Show all available providers in the TrueLayer consent screen
         "providers": "uk-ob-all uk-oauth-all",
     }
-    query = "&".join(f"{k}={v}" for k, v in params.items())
-    return f"{base}/?{query}"
+    return f"{base}/?{urlencode(params)}"
 
 
 async def exchange_code(code: str) -> dict:
