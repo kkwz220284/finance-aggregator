@@ -20,11 +20,19 @@ class Settings(BaseSettings):
     # Derived from sandbox flag
     @property
     def truelayer_auth_url(self) -> str:
-        return "https://auth.truelayer-sandbox.com" if self.truelayer_sandbox else "https://auth.truelayer.com"
+        return (
+            "https://auth.truelayer-sandbox.com"
+            if self.truelayer_sandbox
+            else "https://auth.truelayer.com"
+        )
 
     @property
     def truelayer_api_url(self) -> str:
-        return "https://api.truelayer-sandbox.com" if self.truelayer_sandbox else "https://api.truelayer.com"
+        return (
+            "https://api.truelayer-sandbox.com"
+            if self.truelayer_sandbox
+            else "https://api.truelayer.com"
+        )
 
     # Security
     fernet_key: str

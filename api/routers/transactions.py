@@ -50,6 +50,7 @@ async def list_transactions(
 @router.get("/transactions/{transaction_id}", response_model=TransactionRead)
 async def get_transaction(transaction_id: uuid.UUID, db: AsyncSession = Depends(get_db)):
     from sqlalchemy import select
+
     from app.models.transaction import Transaction
 
     result = await db.execute(select(Transaction).where(Transaction.id == transaction_id))

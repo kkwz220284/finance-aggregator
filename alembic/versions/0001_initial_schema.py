@@ -5,16 +5,18 @@ Revises:
 Create Date: 2026-04-01
 
 """
-from typing import Sequence, Union
+
+from collections.abc import Sequence
 
 import sqlalchemy as sa
-from alembic import op
 from sqlalchemy.dialects import postgresql
 
+from alembic import op
+
 revision: str = "0001"
-down_revision: Union[str, None] = None
-branch_labels: Union[str, Sequence[str], None] = None
-depends_on: Union[str, Sequence[str], None] = None
+down_revision: str | None = None
+branch_labels: str | Sequence[str] | None = None
+depends_on: str | Sequence[str] | None = None
 
 
 def upgrade() -> None:
@@ -34,8 +36,12 @@ def upgrade() -> None:
         sa.Column("iban", sa.String, nullable=True),
         sa.Column("last_synced_at", sa.DateTime(timezone=True), nullable=True),
         sa.Column("is_active", sa.Boolean, nullable=False, server_default="true"),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # transaction_offsets (created before transactions due to FK)
@@ -52,15 +58,24 @@ def upgrade() -> None:
             nullable=False,
         ),
         sa.Column("notes", sa.Text, nullable=True),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # transactions
     op.create_table(
         "transactions",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("account_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False),
+        sa.Column(
+            "account_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("accounts.id", ondelete="CASCADE"),
+            nullable=False,
+        ),
         sa.Column("truelayer_transaction_id", sa.String, nullable=False),
         sa.Column("provider_transaction_id", sa.String, nullable=True),
         sa.Column("amount", sa.Numeric(14, 4), nullable=False),
@@ -84,37 +99,68 @@ def upgrade() -> None:
             sa.ForeignKey("transaction_offsets.id", ondelete="SET NULL"),
             nullable=True,
         ),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
-    # Add FKs from transaction_offsets back to transactions (deferred — transactions table now exists)
+    # Add FKs from transaction_offsets → transactions (deferred, table now exists)
     op.create_foreign_key(
-        "fk_offset_debit_tx", "transaction_offsets", "transactions",
-        ["debit_transaction_id"], ["id"], ondelete="CASCADE"
+        "fk_offset_debit_tx",
+        "transaction_offsets",
+        "transactions",
+        ["debit_transaction_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
     op.create_foreign_key(
-        "fk_offset_credit_tx", "transaction_offsets", "transactions",
-        ["credit_transaction_id"], ["id"], ondelete="CASCADE"
+        "fk_offset_credit_tx",
+        "transaction_offsets",
+        "transactions",
+        ["credit_transaction_id"],
+        ["id"],
+        ondelete="CASCADE",
     )
 
     # truelayer_tokens
     op.create_table(
         "truelayer_tokens",
         sa.Column("id", postgresql.UUID(as_uuid=True), primary_key=True),
-        sa.Column("account_id", postgresql.UUID(as_uuid=True), sa.ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False, unique=True),
+        sa.Column(
+            "account_id",
+            postgresql.UUID(as_uuid=True),
+            sa.ForeignKey("accounts.id", ondelete="CASCADE"),
+            nullable=False,
+            unique=True,
+        ),
         sa.Column("access_token_encrypted", sa.Text, nullable=False),
         sa.Column("refresh_token_encrypted", sa.Text, nullable=False),
         sa.Column("expires_at", sa.DateTime(timezone=True), nullable=False),
         sa.Column("scope", sa.String, nullable=False),
-        sa.Column("created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
-        sa.Column("updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False),
+        sa.Column(
+            "created_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
+        sa.Column(
+            "updated_at", sa.DateTime(timezone=True), server_default=sa.func.now(), nullable=False
+        ),
     )
 
     # Indexes
-    op.create_index("uq_transaction_account", "transactions", ["truelayer_transaction_id", "account_id"], unique=True)
+    op.create_index(
+        "uq_transaction_account",
+        "transactions",
+        ["truelayer_transaction_id", "account_id"],
+        unique=True,
+    )
     op.create_index("ix_transaction_account_timestamp", "transactions", ["account_id", "timestamp"])
-    op.create_index("ix_transaction_amount_currency_timestamp", "transactions", ["amount", "currency", "timestamp"])
+    op.create_index(
+        "ix_transaction_amount_currency_timestamp",
+        "transactions",
+        ["amount", "currency", "timestamp"],
+    )
     op.create_index(
         "ix_transaction_no_offset",
         "transactions",

@@ -143,7 +143,9 @@ async def get_transactions(
         return resp.json()["results"]
 
 
-async def get_balance(access_token: str, truelayer_account_id: str, *, is_card: bool = False) -> dict:
+async def get_balance(
+    access_token: str, truelayer_account_id: str, *, is_card: bool = False
+) -> dict:
     resource = "cards" if is_card else "accounts"
     async with httpx.AsyncClient(transport=_transport, timeout=30) as client:
         resp = await client.get(

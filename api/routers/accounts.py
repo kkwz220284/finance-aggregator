@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from api.dependencies import get_db, require_api_key
+from app.models.account import Account
 from app.schemas.account import AccountRead
 from app.services import account_service, transaction_service
-from app.models.account import Account
 
 router = APIRouter(dependencies=[Depends(require_api_key)])
 

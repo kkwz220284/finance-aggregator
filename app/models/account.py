@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.models.base import Base, TimestampMixin
 
 
-class AccountType(str, enum.Enum):
+class AccountType(enum.StrEnum):
     current = "current"
     savings = "savings"
     credit_card = "credit_card"
@@ -18,11 +18,11 @@ class AccountType(str, enum.Enum):
 class Account(Base, TimestampMixin):
     __tablename__ = "accounts"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     truelayer_account_id: Mapped[str] = mapped_column(String, unique=True, nullable=False)
-    provider_id: Mapped[str] = mapped_column(String, nullable=False)  # monzo | chase | amex | natwest
+    provider_id: Mapped[str] = mapped_column(
+        String, nullable=False
+    )  # monzo | chase | amex | natwest
     display_name: Mapped[str] = mapped_column(String, nullable=False)
     account_type: Mapped[AccountType] = mapped_column(Enum(AccountType), nullable=False)
     currency: Mapped[str] = mapped_column(String(3), nullable=False)

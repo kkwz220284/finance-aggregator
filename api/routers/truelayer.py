@@ -12,8 +12,7 @@ from api.dependencies import get_db, require_api_key
 from app.config import get_settings
 from app.models.account import Account
 from app.schemas.account import AccountRead
-from app.services import account_service, truelayer_service, transaction_service
-from app.services import offset_service
+from app.services import account_service, offset_service, transaction_service, truelayer_service
 
 router = APIRouter()
 settings = get_settings()
@@ -41,14 +40,20 @@ async def oauth_callback(
 ):
     """TrueLayer redirects here after the user grants consent."""
     if error:
-        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"TrueLayer error: {error}")
+        raise HTTPException(
+            status_code=status.HTTP_502_BAD_GATEWAY, detail=f"TrueLayer error: {error}"
+        )
     if not code:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing authorization code")
+        raise HTTPException(
+            status_code=status.HTTP_400_BAD_REQUEST, detail="Missing authorization code"
+        )
     # Some providers (e.g. Amex) strip the state parameter on redirect.
     # Validate state when present; skip when absent (acceptable for single-user app).
     if state:
         if state not in _pending_states:
-            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state")
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state"
+            )
         _pending_states.discard(state)
 
     try:
@@ -110,4 +115,6 @@ def _verify_webhook_signature(body: bytes, signature: str) -> None:
         hashlib.sha256,
     ).hexdigest()
     if not hmac.compare_digest(expected, signature):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook signature")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid webhook signature"
+        )

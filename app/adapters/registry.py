@@ -25,4 +25,5 @@ def get_adapter(provider_id: str) -> "BankAdapter":
 
 def list_providers() -> list[str]:
     import app.adapters.normalizers  # noqa: F401
+
     return list(_REGISTRY.keys())

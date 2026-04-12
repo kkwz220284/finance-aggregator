@@ -10,7 +10,6 @@ from sqlalchemy.orm import selectinload
 from app.adapters.registry import get_adapter
 from app.models.account import Account
 from app.models.token import TrueLayerToken
-from app.schemas.account import AccountCreate
 from app.services import truelayer_service
 from app.services.crypto import decrypt, encrypt
 
@@ -27,9 +26,7 @@ async def get_account(db: AsyncSession, account_id: uuid.UUID) -> Account | None
     return result.scalar_one_or_none()
 
 
-async def connect_accounts_from_token(
-    db: AsyncSession, token_data: dict
-) -> list[Account]:
+async def connect_accounts_from_token(db: AsyncSession, token_data: dict) -> list[Account]:
     """After OAuth callback: fetch TrueLayer accounts, upsert into DB, store tokens."""
     now = datetime.now(UTC)
     access_token = token_data["access_token"]
@@ -43,7 +40,9 @@ async def connect_accounts_from_token(
 
         # Upsert account
         result = await db.execute(
-            select(Account).where(Account.truelayer_account_id == account_create.truelayer_account_id)
+            select(Account).where(
+                Account.truelayer_account_id == account_create.truelayer_account_id
+            )
         )
         account = result.scalar_one_or_none()
         if account is None:
@@ -65,7 +64,9 @@ async def connect_accounts_from_token(
         else:
             token_row.access_token_encrypted = encrypt(token_data["access_token"])
             token_row.refresh_token_encrypted = encrypt(token_data["refresh_token"])
-            token_row.expires_at = truelayer_service.store_token(token_data, account.id, now).expires_at
+            token_row.expires_at = truelayer_service.store_token(
+                token_data, account.id, now
+            ).expires_at
 
         connected.append(account)
 
