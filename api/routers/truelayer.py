@@ -33,11 +33,23 @@ async def connect():
 
 
 @router.get("/auth/truelayer/callback", response_model=list[AccountRead])
-async def oauth_callback(code: str, state: str, db: AsyncSession = Depends(get_db)):
+async def oauth_callback(
+    db: AsyncSession = Depends(get_db),
+    code: str | None = None,
+    state: str | None = None,
+    error: str | None = None,
+):
     """TrueLayer redirects here after the user grants consent."""
-    if state not in _pending_states:
-        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state")
-    _pending_states.discard(state)
+    if error:
+        raise HTTPException(status_code=status.HTTP_502_BAD_GATEWAY, detail=f"TrueLayer error: {error}")
+    if not code:
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Missing authorization code")
+    # Some providers (e.g. Amex) strip the state parameter on redirect.
+    # Validate state when present; skip when absent (acceptable for single-user app).
+    if state:
+        if state not in _pending_states:
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Invalid or expired state")
+        _pending_states.discard(state)
 
     try:
         token_data = await truelayer_service.exchange_code(code)

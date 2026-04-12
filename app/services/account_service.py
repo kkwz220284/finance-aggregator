@@ -33,7 +33,7 @@ async def connect_accounts_from_token(
     """After OAuth callback: fetch TrueLayer accounts, upsert into DB, store tokens."""
     now = datetime.now(UTC)
     access_token = token_data["access_token"]
-    raw_accounts = await truelayer_service.get_accounts(access_token)
+    raw_accounts = await truelayer_service.get_accounts_and_cards(access_token)
 
     connected: list[Account] = []
     for raw in raw_accounts:

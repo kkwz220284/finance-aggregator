@@ -13,7 +13,7 @@ from app.services.crypto import decrypt, encrypt
 settings = get_settings()
 
 # Scopes required for full account + transaction access
-TRUELAYER_SCOPES = "accounts balance transactions offline_access"
+TRUELAYER_SCOPES = "accounts balance transactions cards offline_access"
 
 # Refresh token proactively if it expires within this window
 _REFRESH_BUFFER = timedelta(minutes=5)
@@ -96,19 +96,46 @@ async def get_accounts(access_token: str) -> list[dict]:
         return resp.json()["results"]
 
 
+async def get_cards(access_token: str) -> list[dict]:
+    """Fetch card accounts (credit cards like Amex) from TrueLayer."""
+    async with httpx.AsyncClient(transport=_transport, timeout=30) as client:
+        resp = await client.get(
+            f"{settings.truelayer_api_url}/data/v1/cards",
+            headers={"Authorization": f"Bearer {access_token}"},
+        )
+        resp.raise_for_status()
+        return resp.json()["results"]
+
+
+async def get_accounts_and_cards(access_token: str) -> list[dict]:
+    """Fetch both bank accounts and cards, tolerating 501 from either endpoint."""
+    results: list[dict] = []
+    for fetcher in (get_accounts, get_cards):
+        try:
+            results.extend(await fetcher(access_token))
+        except httpx.HTTPStatusError as e:
+            if e.response.status_code in (403, 501):
+                continue
+            raise
+    return results
+
+
 async def get_transactions(
     access_token: str,
     truelayer_account_id: str,
     from_dt: datetime,
     to_dt: datetime,
+    *,
+    is_card: bool = False,
 ) -> list[dict]:
+    resource = "cards" if is_card else "accounts"
     params = {
         "from": from_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
         "to": to_dt.strftime("%Y-%m-%dT%H:%M:%SZ"),
     }
     async with httpx.AsyncClient(transport=_transport, timeout=60) as client:
         resp = await client.get(
-            f"{settings.truelayer_api_url}/data/v1/accounts/{truelayer_account_id}/transactions",
+            f"{settings.truelayer_api_url}/data/v1/{resource}/{truelayer_account_id}/transactions",
             headers={"Authorization": f"Bearer {access_token}"},
             params=params,
         )
@@ -116,10 +143,11 @@ async def get_transactions(
         return resp.json()["results"]
 
 
-async def get_balance(access_token: str, truelayer_account_id: str) -> dict:
+async def get_balance(access_token: str, truelayer_account_id: str, *, is_card: bool = False) -> dict:
+    resource = "cards" if is_card else "accounts"
     async with httpx.AsyncClient(transport=_transport, timeout=30) as client:
         resp = await client.get(
-            f"{settings.truelayer_api_url}/data/v1/accounts/{truelayer_account_id}/balance",
+            f"{settings.truelayer_api_url}/data/v1/{resource}/{truelayer_account_id}/balance",
             headers={"Authorization": f"Bearer {access_token}"},
         )
         resp.raise_for_status()

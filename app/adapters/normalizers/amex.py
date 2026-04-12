@@ -24,6 +24,7 @@ from app.schemas.transaction import TransactionCreate
 @register
 class AmexAdapter(BankAdapter):
     provider_id = "amex"
+    provider_aliases = ("ob-amex",)
 
     def normalize_transaction(self, raw: dict, account_id: str) -> TransactionCreate:
         raw_amount = Decimal(str(raw["amount"]))
