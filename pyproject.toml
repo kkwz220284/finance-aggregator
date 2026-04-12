@@ -51,3 +51,8 @@ testpaths = ["tests"]
 python_version = "3.13"
 strict = true
 ignore_missing_imports = true
+
+[dependency-groups]
+dev = [
+    "pre-commit>=4.5.1",
+]
