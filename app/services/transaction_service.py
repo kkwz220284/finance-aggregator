@@ -32,8 +32,11 @@ async def sync_account(
     to_dt = to_dt or now
     from_dt = from_dt or (account.last_synced_at or (now - timedelta(days=90)))
 
+    from app.models.account import AccountType
+
     raw_transactions = await truelayer_service.get_transactions(
-        access_token, account.truelayer_account_id, from_dt, to_dt
+        access_token, account.truelayer_account_id, from_dt, to_dt,
+        is_card=account.account_type == AccountType.credit_card,
     )
 
     if not raw_transactions:

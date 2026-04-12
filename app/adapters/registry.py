@@ -8,6 +8,8 @@ _REGISTRY: dict[str, type["BankAdapter"]] = {}
 
 def register(cls: type["BankAdapter"]) -> type["BankAdapter"]:
     _REGISTRY[cls.provider_id] = cls
+    for alias in getattr(cls, "provider_aliases", ()):
+        _REGISTRY[alias] = cls
     return cls
 
 
