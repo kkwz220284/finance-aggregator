@@ -37,6 +37,9 @@ packages = ["app", "api", "sync_worker"]
 line-length = 100
 target-version = "py313"
 
+[tool.ruff.format]
+preview = true
+
 [tool.ruff.lint]
 select = ["E", "F", "I", "UP"]
 
