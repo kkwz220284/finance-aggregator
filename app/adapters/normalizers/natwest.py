@@ -17,6 +17,7 @@ from app.schemas.transaction import TransactionCreate
 @register
 class NatWestAdapter(BankAdapter):
     provider_id = "natwest"
+    provider_aliases = ("ob-natwest",)
 
     def normalize_transaction(self, raw: dict, account_id: str) -> TransactionCreate:
         amount = Decimal(str(raw["amount"]))

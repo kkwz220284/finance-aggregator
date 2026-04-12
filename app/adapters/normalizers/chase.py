@@ -17,6 +17,7 @@ from app.schemas.transaction import TransactionCreate
 @register
 class ChaseAdapter(BankAdapter):
     provider_id = "chase"
+    provider_aliases = ("ob-chase",)
 
     def normalize_transaction(self, raw: dict, account_id: str) -> TransactionCreate:
         amount = Decimal(str(raw["amount"]))
