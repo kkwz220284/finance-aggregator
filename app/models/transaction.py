@@ -1,30 +1,30 @@
 import enum
 import uuid
+from datetime import datetime
 from decimal import Decimal
 
 from sqlalchemy import (
     Boolean,
+    DateTime,
     Enum,
     ForeignKey,
     Index,
     Numeric,
     String,
     Text,
-    DateTime,
 )
 from sqlalchemy.dialects.postgresql import ARRAY, JSONB, UUID
 from sqlalchemy.orm import Mapped, mapped_column, relationship
-from datetime import datetime
 
 from app.models.base import Base, TimestampMixin
 
 
-class TransactionType(str, enum.Enum):
+class TransactionType(enum.StrEnum):
     debit = "debit"
     credit = "credit"
 
 
-class OffsetType(str, enum.Enum):
+class OffsetType(enum.StrEnum):
     manual = "manual"
     auto_detected = "auto_detected"
 
@@ -32,9 +32,7 @@ class OffsetType(str, enum.Enum):
 class TransactionOffset(Base, TimestampMixin):
     __tablename__ = "transaction_offsets"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     debit_transaction_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("transactions.id", ondelete="CASCADE"), nullable=False
     )
@@ -57,9 +55,7 @@ class TransactionOffset(Base, TimestampMixin):
 class Transaction(Base, TimestampMixin):
     __tablename__ = "transactions"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True), ForeignKey("accounts.id", ondelete="CASCADE"), nullable=False
     )
@@ -73,7 +69,9 @@ class Transaction(Base, TimestampMixin):
     category: Mapped[str | None] = mapped_column(String, nullable=True)
     timestamp: Mapped[datetime] = mapped_column(DateTime(timezone=True), nullable=False)
     transaction_type: Mapped[TransactionType] = mapped_column(Enum(TransactionType), nullable=False)
-    transaction_classification: Mapped[list[str] | None] = mapped_column(ARRAY(String), nullable=True)
+    transaction_classification: Mapped[list[str] | None] = mapped_column(
+        ARRAY(String), nullable=True
+    )
     running_balance: Mapped[Decimal | None] = mapped_column(Numeric(14, 4), nullable=True)
     raw_data: Mapped[dict] = mapped_column(JSONB, nullable=False)
     is_pending: Mapped[bool] = mapped_column(Boolean, default=False, nullable=False)

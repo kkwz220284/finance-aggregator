@@ -30,7 +30,9 @@ async def sync_one(account: Account) -> int:
             from_dt=account.last_synced_at or (now - timedelta(days=90)),
             to_dt=now,
         )
-        print(f"[sync] {account.display_name} ({account.provider_id}): {count} transactions upserted")
+        print(
+            f"[sync] {account.display_name} ({account.provider_id}): {count} transactions upserted"
+        )
         return count
 
 

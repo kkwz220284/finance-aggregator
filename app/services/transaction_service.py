@@ -3,15 +3,14 @@
 import uuid
 from datetime import UTC, datetime, timedelta
 
-from sqlalchemy import func, select, update
+from sqlalchemy import func, select
 from sqlalchemy.dialects.postgresql import insert
 from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.adapters.registry import get_adapter
 from app.models.account import Account
-from app.models.token import TrueLayerToken
 from app.models.transaction import Transaction
-from app.schemas.transaction import TransactionCreate, TransactionFilter
+from app.schemas.transaction import TransactionFilter
 from app.services import truelayer_service
 
 
@@ -35,7 +34,10 @@ async def sync_account(
     from app.models.account import AccountType
 
     raw_transactions = await truelayer_service.get_transactions(
-        access_token, account.truelayer_account_id, from_dt, to_dt,
+        access_token,
+        account.truelayer_account_id,
+        from_dt,
+        to_dt,
         is_card=account.account_type == AccountType.credit_card,
     )
 
@@ -44,8 +46,7 @@ async def sync_account(
 
     adapter = get_adapter(account.provider_id)
     normalised = [
-        adapter.normalize_transaction(raw, str(account.id)).model_dump()
-        for raw in raw_transactions
+        adapter.normalize_transaction(raw, str(account.id)).model_dump() for raw in raw_transactions
     ]
 
     # Bulk upsert: insert or update on conflict
@@ -74,7 +75,9 @@ async def sync_account(
     return len(normalised)
 
 
-async def ingest_webhook_transaction(db: AsyncSession, raw: dict, account: Account) -> Transaction | None:
+async def ingest_webhook_transaction(
+    db: AsyncSession, raw: dict, account: Account
+) -> Transaction | None:
     """Ingest a single transaction from a TrueLayer webhook payload."""
     adapter = get_adapter(account.provider_id)
     tx_data = adapter.normalize_transaction(raw, str(account.id))
@@ -126,7 +129,8 @@ async def query_transactions(
     total = count_result.scalar_one()
 
     q = (
-        q.order_by(Transaction.timestamp.desc())
+        q
+        .order_by(Transaction.timestamp.desc())
         .offset((filters.page - 1) * filters.page_size)
         .limit(filters.page_size)
     )

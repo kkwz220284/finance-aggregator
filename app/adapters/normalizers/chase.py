@@ -35,7 +35,9 @@ class ChaseAdapter(BankAdapter):
             timestamp=raw["timestamp"],
             transaction_type=tx_type,
             transaction_classification=raw.get("transaction_classification"),
-            running_balance=Decimal(str(raw["running_balance"]["amount"])) if raw.get("running_balance") else None,
+            running_balance=Decimal(str(raw["running_balance"]["amount"]))
+            if raw.get("running_balance")
+            else None,
             raw_data=raw,
             is_pending=raw.get("running_balance") is None,
         )

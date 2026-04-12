@@ -124,12 +124,12 @@ async def main() -> None:
         print(f"\nAmex account found: {account['id']} ({account.get('display_name', '')})")
 
         # Step 3: get a fresh access token from the DB
-        from app.db.session import AsyncSessionLocal
-        from app.models.account import Account
-        from app.models.token import TrueLayerToken
-        from app.services.truelayer_service import get_valid_access_token
         from sqlalchemy import select
         from sqlalchemy.orm import selectinload
+
+        from app.db.session import AsyncSessionLocal
+        from app.models.account import Account
+        from app.services.truelayer_service import get_valid_access_token
 
         async with AsyncSessionLocal() as db:
             result = await db.execute(
@@ -167,7 +167,9 @@ async def main() -> None:
             print("RAW:", json.dumps(raw, indent=2, default=str))
 
     print("\n" + "=" * 70)
-    print(f"Done. {len(raw_txs) - len(errors)}/{len(raw_txs)} transactions normalised successfully.")
+    print(
+        f"Done. {len(raw_txs) - len(errors)}/{len(raw_txs)} transactions normalised successfully."
+    )
     if errors:
         print(f"{len(errors)} error(s) — see above. Update the AmexAdapter normalizer accordingly.")
 

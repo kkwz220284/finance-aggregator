@@ -1,13 +1,14 @@
 import asyncio
 from logging.config import fileConfig
 
-from alembic import context
-from sqlalchemy.ext.asyncio import async_engine_from_config
 from sqlalchemy import pool
+from sqlalchemy.ext.asyncio import async_engine_from_config
+
+import app.models  # noqa: F401 — registers all models
+from alembic import context
 
 # Import all models so metadata is populated
 from app.models.base import Base
-import app.models  # noqa: F401 — registers all models
 
 config = context.config
 if config.config_file_name is not None:
@@ -18,6 +19,7 @@ target_metadata = Base.metadata
 
 def get_url() -> str:
     from app.config import get_settings
+
     return get_settings().database_url
 
 

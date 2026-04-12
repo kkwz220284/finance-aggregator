@@ -11,9 +11,7 @@ from app.models.base import Base, TimestampMixin
 class TrueLayerToken(Base, TimestampMixin):
     __tablename__ = "truelayer_tokens"
 
-    id: Mapped[uuid.UUID] = mapped_column(
-        UUID(as_uuid=True), primary_key=True, default=uuid.uuid4
-    )
+    id: Mapped[uuid.UUID] = mapped_column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     account_id: Mapped[uuid.UUID] = mapped_column(
         UUID(as_uuid=True),
         ForeignKey("accounts.id", ondelete="CASCADE"),

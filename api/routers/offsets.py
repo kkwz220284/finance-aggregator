@@ -15,7 +15,9 @@ router = APIRouter(dependencies=[Depends(require_api_key)])
 
 @router.get("/offsets", response_model=list[OffsetRead])
 async def list_offsets(db: AsyncSession = Depends(get_db)):
-    result = await db.execute(select(TransactionOffset).order_by(TransactionOffset.created_at.desc()))
+    result = await db.execute(
+        select(TransactionOffset).order_by(TransactionOffset.created_at.desc())
+    )
     return result.scalars().all()
 
 

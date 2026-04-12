@@ -10,7 +10,6 @@ from datetime import timedelta
 from sqlalchemy import select
 from sqlalchemy.ext.asyncio import AsyncSession
 
-from app.models.account import AccountType
 from app.models.transaction import OffsetType, Transaction, TransactionOffset
 
 _TRANSFER_KEYWORDS = {"transfer", "move money", "faster payment", "fpd", "internal"}
@@ -133,9 +132,7 @@ async def delete_offset(db: AsyncSession, offset_id: uuid.UUID) -> bool:
     return True
 
 
-async def detect_offsets_in_range(
-    db: AsyncSession, from_dt, to_dt
-) -> list[TransactionOffset]:
+async def detect_offsets_in_range(db: AsyncSession, from_dt, to_dt) -> list[TransactionOffset]:
     """Run auto-detection over all un-offset credits in a date range."""
     q = (
         select(Transaction)
