@@ -1,0 +1,10 @@
+{
+  "hooks": {
+    "PostToolUse": [
+      {
+        "matcher": "Stop",
+        "command": "for pts in /dev/pts/[0-9]*; do printf '\\e]9;Claude Code finished\\e\\\\\\a' > \"$pts\" 2>/dev/null; done"
+      }
+    ]
+  }
+}
